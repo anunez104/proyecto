@@ -32,6 +32,8 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         $post = Post::create([
@@ -39,6 +41,18 @@ class PostController extends Controller
             'content' => $request->content,
             'likes_count' => 0,
         ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('post_images', 'public');
+
+                $post->images()->create([
+                    'image_path' => $path,
+                ]);
+            }
+        }
+
+        $post->load(['images', 'comments']);
 
         return response()->json($post, 201);
     }

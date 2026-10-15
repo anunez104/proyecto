@@ -3,10 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class Post extends Model
 {
-    protected $fillable = ['title', 'content', 'likes_count'];
+    protected $fillable = [
+        'title',
+        'content',
+        'likes_count',
+        'user_id',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function images()
     {
@@ -17,4 +28,9 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class);
     }
+public function likes()
+{
+    return $this->hasMany(PostLike::class);
+}
+
 }

@@ -4,19 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Models\PostLike;
 
 class PostController extends Controller
 {
-    public function index()
-    {
-        $posts = Post::with(['images', 'comments'])->get();
+    
+public function index()
+{
+    $posts = Post::with(['user', 'images', 'comments'])
+        ->orderBy('id', 'desc')
+        ->paginate(10);
 
-        return response()->json($posts);
-    }
+    return response()->json($posts);
+}
+
 
     public function show($id)
     {
-        $post = Post::with(['images', 'comments'])->find($id);
+        $post = Post::with(['user', 'images', 'comments'])->find($id);
 
         if (!$post) {
             return response()->json([
@@ -40,6 +45,7 @@ class PostController extends Controller
             'title' => $request->title,
             'content' => $request->content,
             'likes_count' => 0,
+            'user_id' => $request->user()->id,
         ]);
 
         if ($request->hasFile('images')) {
@@ -52,7 +58,7 @@ class PostController extends Controller
             }
         }
 
-        $post->load(['images', 'comments']);
+        $post->load(['user', 'images', 'comments']);
 
         return response()->json($post, 201);
     }
@@ -74,18 +80,39 @@ class PostController extends Controller
         ]);
     }
 
-    public function like($id)
-    {
-        $post = Post::find($id);
+    public function like(Request $request, $id)
+{
+    $post = Post::find($id);
 
-        if (!$post) {
-            return response()->json([
-                'message' => 'Post no encontrado'
-            ], 404);
-        }
-
-        $post->increment('likes_count');
-
-        return response()->json($post);
+    if (!$post) {
+        return response()->json([
+            'message' => 'Post no encontrado'
+        ], 404);
     }
+
+    $user = $request->user();
+
+    $likeExistente = PostLike::where('post_id', $post->id)
+        ->where('user_id', $user->id)
+        ->first();
+
+    if ($likeExistente) {
+        return response()->json([
+            'message' => 'Ya has dado like a esta publicación',
+            'likes_count' => $post->likes_count
+        ], 409);
+    }
+
+    PostLike::create([
+        'post_id' => $post->id,
+        'user_id' => $user->id,
+    ]);
+
+    $post->increment('likes_count');
+
+    return response()->json([
+        'message' => 'Like registrado correctamente',
+        'likes_count' => $post->fresh()->likes_count
+    ]);
+}
 }

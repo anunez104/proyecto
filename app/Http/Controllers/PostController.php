@@ -9,9 +9,17 @@ use App\Models\PostLike;
 class PostController extends Controller
 {
     
-public function index()
+public function index(Request $request)
 {
+    $search = $request->query('search');
+
     $posts = Post::with(['user', 'images', 'comments'])
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('content', 'like', '%' . $search . '%');
+            });
+        })
         ->orderBy('id', 'desc')
         ->paginate(10);
 

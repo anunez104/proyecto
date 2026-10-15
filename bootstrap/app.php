@@ -13,12 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Evita redirigir a una ruta login inexistente.
+        $middleware->redirectGuestsTo('/');
     })
     ->withExceptions(function (Exceptions $exceptions) {
-    $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
-        return $request->is('api/*') || $request->expectsJson();
-    });
-
-})->create();
+        // Devuelve respuestas JSON para las peticiones de la API.
+        $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
+    })
+    ->create();
     

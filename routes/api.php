@@ -5,29 +5,37 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AuthController;
 
-// Listar y ver publicaciones
-Route::get('/posts', [PostController::class, 'index']);
-Route::get('/posts/{id}', [PostController::class, 'show']);
+// Versionado de la API (v1)
+Route::prefix('v1')->group(function () {
 
-// Rutas que requieren autenticación
-Route::middleware('auth:sanctum')->group(function () {
-    // Crear publicación
-    Route::post('/posts', [PostController::class, 'store']);
+    // Listar y ver publicaciones (públicas)
+    Route::get('/posts', [PostController::class, 'index']);
+    Route::get('/posts/{id}', [PostController::class, 'show']);
 
-    // Dar Like
-    Route::post('/posts/{id}/like', [PostController::class, 'like']);
+    // Ver comentarios (público)
+    Route::get('/posts/{id}/comments', [CommentController::class, 'index']);
 
-    // Cerrar sesión
-    Route::post('/logout', [AuthController::class, 'logout']);
+    // Autenticación
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Rutas que requieren autenticación con Sanctum
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Crear publicación
+        Route::post('/posts', [PostController::class, 'store']);
+
+        // Dar Like
+        Route::post('/posts/{id}/like', [PostController::class, 'like']);
+
+        // Eliminar publicación
+        Route::delete('/posts/{id}', [PostController::class, 'destroy']);
+
+        // Agregar comentario
+        Route::post('/posts/{id}/comments', [CommentController::class, 'store']);
+
+        // Cerrar sesión
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
 });
-
-// Eliminar publicación
-Route::delete('/posts/{id}', [PostController::class, 'destroy']);
-
-// Comentarios
-Route::get('/posts/{id}/comments', [CommentController::class, 'index']);
-Route::post('/posts/{id}/comments', [CommentController::class, 'store']);
-
-// Autenticación
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
